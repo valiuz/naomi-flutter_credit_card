@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_credit_card/src/utils/helpers.dart';
 
 import '../flutter_credit_card.dart';
 import 'masked_text_controller.dart';
@@ -35,6 +36,11 @@ class CreditCardForm extends StatefulWidget {
     this.cardHolderValidator,
     this.onFormComplete,
     this.disableCardNumberAutoFillHints = false,
+    this.customCardTypeIcons = const <CustomCardTypeIcon>[],
+    this.cardNumberLabel,
+    this.expiryDateLabel,
+    this.cvvLabel,
+    this.cardHolderLabel,
     super.key,
   });
 
@@ -123,6 +129,21 @@ class CreditCardForm extends StatefulWidget {
   /// A validator for card holder text field.
   final ValidationCallback? cardHolderValidator;
 
+  /// Replaces credit card image with provided widget.
+  final List<CustomCardTypeIcon> customCardTypeIcons;
+
+  /// Label widget to be displayed above the card number text field.
+  final Widget? cardNumberLabel;
+
+  /// Label widget to be displayed above the expiry date text field.
+  final Widget? expiryDateLabel;
+
+  /// Label widget to be displayed above the cvv text field.
+  final Widget? cvvLabel;
+
+  /// Label widget to be displayed above the card holder text field.
+  final Widget? cardHolderLabel;
+
   /// Setting this flag to true will disable autofill hints for Credit card
   /// number text field. Flutter has a bug when auto fill hints are enabled for
   /// credit card numbers it shows keyboard with characters. But, disabling
@@ -143,6 +164,7 @@ class _CreditCardFormState extends State<CreditCardForm> {
   late String expiryDate;
   late String cardHolderName;
   late String cvvCode;
+  late Widget cardTypeIcon;
   bool isCvvFocused = false;
 
   late final CreditCardModel creditCardModel;
@@ -190,27 +212,35 @@ class _CreditCardFormState extends State<CreditCardForm> {
             visible: widget.isCardNumberVisible,
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
-              margin: const EdgeInsets.only(left: 16, top: 16, right: 16),
-              child: TextFormField(
-                key: widget.cardNumberKey,
-                obscureText: widget.obscureNumber,
-                controller: _cardNumberController,
-                onChanged: _onCardNumberChange,
-                onEditingComplete: () =>
-                    FocusScope.of(context).requestFocus(expiryDateNode),
-                decoration: widget.inputConfiguration.cardNumberDecoration,
-                style: widget.inputConfiguration.cardNumberTextStyle,
-                keyboardType: TextInputType.number,
-                textInputAction: TextInputAction.next,
-                autofillHints: widget.disableCardNumberAutoFillHints
-                    ? null
-                    : const <String>[AutofillHints.creditCardNumber],
-                autovalidateMode: widget.autovalidateMode,
-                validator: widget.cardNumberValidator ??
-                    (String? value) => Validators.cardNumberValidator(
-                          value,
-                          widget.numberValidationMessage,
-                        ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  widget.cardNumberLabel ?? const SizedBox.shrink(),
+                  TextFormField(
+                    key: widget.cardNumberKey,
+                    obscureText: widget.obscureNumber,
+                    controller: _cardNumberController,
+                    onChanged: _onCardNumberChange,
+                    onEditingComplete: () =>
+                        FocusScope.of(context).requestFocus(expiryDateNode),
+                    decoration:
+                        widget.inputConfiguration.cardNumberDecoration.copyWith(
+                      suffixIcon: _getCardTypeIcon(),
+                    ),
+                    style: widget.inputConfiguration.cardNumberTextStyle,
+                    keyboardType: TextInputType.number,
+                    textInputAction: TextInputAction.next,
+                    autofillHints: widget.disableCardNumberAutoFillHints
+                        ? null
+                        : const <String>[AutofillHints.creditCardNumber],
+                    autovalidateMode: widget.autovalidateMode,
+                    validator: widget.cardNumberValidator ??
+                        (String? value) => Validators.cardNumberValidator(
+                              value,
+                              widget.numberValidationMessage,
+                            ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -221,60 +251,72 @@ class _CreditCardFormState extends State<CreditCardForm> {
                 child: Expanded(
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    margin: const EdgeInsets.only(left: 16, top: 8, right: 16),
-                    child: TextFormField(
-                      key: widget.expiryDateKey,
-                      controller: _expiryDateController,
-                      onChanged: _onExpiryDateChange,
-                      focusNode: expiryDateNode,
-                      onEditingComplete: () =>
-                          FocusScope.of(context).requestFocus(cvvFocusNode),
-                      decoration:
-                          widget.inputConfiguration.expiryDateDecoration,
-                      style: widget.inputConfiguration.expiryDateTextStyle,
-                      autovalidateMode: widget.autovalidateMode,
-                      keyboardType: TextInputType.number,
-                      textInputAction: TextInputAction.next,
-                      autofillHints: const <String>[
-                        AutofillHints.creditCardExpirationDate
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        widget.expiryDateLabel ?? const SizedBox.shrink(),
+                        TextFormField(
+                          key: widget.expiryDateKey,
+                          controller: _expiryDateController,
+                          onChanged: _onExpiryDateChange,
+                          focusNode: expiryDateNode,
+                          onEditingComplete: () =>
+                              FocusScope.of(context).requestFocus(cvvFocusNode),
+                          decoration:
+                              widget.inputConfiguration.expiryDateDecoration,
+                          style: widget.inputConfiguration.expiryDateTextStyle,
+                          autovalidateMode: widget.autovalidateMode,
+                          keyboardType: TextInputType.number,
+                          textInputAction: TextInputAction.next,
+                          autofillHints: const <String>[
+                            AutofillHints.creditCardExpirationDate
+                          ],
+                          validator: widget.expiryDateValidator ??
+                              (String? value) => Validators.expiryDateValidator(
+                                    value,
+                                    widget.dateValidationMessage,
+                                  ),
+                        ),
                       ],
-                      validator: widget.expiryDateValidator ??
-                          (String? value) => Validators.expiryDateValidator(
-                                value,
-                                widget.dateValidationMessage,
-                              ),
                     ),
                   ),
                 ),
               ),
+              const SizedBox(width: 16.0),
               Expanded(
                 child: Visibility(
                   visible: widget.enableCvv,
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    margin: const EdgeInsets.only(left: 16, top: 8, right: 16),
-                    child: TextFormField(
-                      key: widget.cvvCodeKey,
-                      obscureText: widget.obscureCvv,
-                      focusNode: cvvFocusNode,
-                      controller: _cvvCodeController,
-                      onEditingComplete: _onCvvEditComplete,
-                      decoration: widget.inputConfiguration.cvvCodeDecoration,
-                      style: widget.inputConfiguration.cvvCodeTextStyle,
-                      keyboardType: TextInputType.number,
-                      autovalidateMode: widget.autovalidateMode,
-                      textInputAction: widget.isHolderNameVisible
-                          ? TextInputAction.next
-                          : TextInputAction.done,
-                      autofillHints: const <String>[
-                        AutofillHints.creditCardSecurityCode
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        widget.cvvLabel ?? const SizedBox.shrink(),
+                        TextFormField(
+                          key: widget.cvvCodeKey,
+                          obscureText: widget.obscureCvv,
+                          focusNode: cvvFocusNode,
+                          controller: _cvvCodeController,
+                          onEditingComplete: _onCvvEditComplete,
+                          decoration:
+                              widget.inputConfiguration.cvvCodeDecoration,
+                          style: widget.inputConfiguration.cvvCodeTextStyle,
+                          keyboardType: TextInputType.number,
+                          autovalidateMode: widget.autovalidateMode,
+                          textInputAction: widget.isHolderNameVisible
+                              ? TextInputAction.next
+                              : TextInputAction.done,
+                          autofillHints: const <String>[
+                            AutofillHints.creditCardSecurityCode
+                          ],
+                          onChanged: _onCvvChange,
+                          validator: widget.cvvValidator ??
+                              (String? value) => Validators.cvvValidator(
+                                    value,
+                                    widget.cvvValidationMessage,
+                                  ),
+                        ),
                       ],
-                      onChanged: _onCvvChange,
-                      validator: widget.cvvValidator ??
-                          (String? value) => Validators.cvvValidator(
-                                value,
-                                widget.cvvValidationMessage,
-                              ),
                     ),
                   ),
                 ),
@@ -285,20 +327,25 @@ class _CreditCardFormState extends State<CreditCardForm> {
             visible: widget.isHolderNameVisible,
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
-              margin: const EdgeInsets.only(left: 16, top: 8, right: 16),
-              child: TextFormField(
-                key: widget.cardHolderKey,
-                controller: _cardHolderNameController,
-                onChanged: _onCardHolderNameChange,
-                focusNode: cardHolderNode,
-                decoration: widget.inputConfiguration.cardHolderDecoration,
-                style: widget.inputConfiguration.cardHolderTextStyle,
-                keyboardType: TextInputType.text,
-                autovalidateMode: widget.autovalidateMode,
-                textInputAction: TextInputAction.done,
-                autofillHints: const <String>[AutofillHints.creditCardName],
-                onEditingComplete: _onHolderNameEditComplete,
-                validator: widget.cardHolderValidator,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  widget.cardHolderLabel ?? const SizedBox.shrink(),
+                  TextFormField(
+                    key: widget.cardHolderKey,
+                    controller: _cardHolderNameController,
+                    onChanged: _onCardHolderNameChange,
+                    focusNode: cardHolderNode,
+                    decoration: widget.inputConfiguration.cardHolderDecoration,
+                    style: widget.inputConfiguration.cardHolderTextStyle,
+                    keyboardType: TextInputType.text,
+                    autovalidateMode: widget.autovalidateMode,
+                    textInputAction: TextInputAction.done,
+                    autofillHints: const <String>[AutofillHints.creditCardName],
+                    onEditingComplete: _onHolderNameEditComplete,
+                    validator: widget.cardHolderValidator,
+                  ),
+                ],
               ),
             ),
           ),
@@ -381,5 +428,14 @@ class _CreditCardFormState extends State<CreditCardForm> {
     FocusScope.of(context).unfocus();
     onCreditCardModelChange(creditCardModel);
     widget.onFormComplete?.call();
+  }
+
+  Widget _getCardTypeIcon() {
+    final CardType ccType = detectCCType(creditCardModel.cardNumber);
+
+    return getCardTypeImage(
+      cardType: ccType,
+      customIcons: widget.customCardTypeIcons,
+    );
   }
 }
