@@ -76,11 +76,14 @@ Widget getCardTypeImage({
       return CustomCardTypeIcon(
         cardType: isKnownCardType ? cardType : CardType.otherBrand,
         cardImage: isKnownCardType
-            ? Image.asset(
-                AppConstants.cardTypeIconAsset[cardType]!,
-                height: AppConstants.creditCardIconSize,
-                width: AppConstants.creditCardIconSize,
-                package: AppConstants.packageName,
+            ? Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Image.asset(
+                  AppConstants.cardTypeIconAsset[cardType]!,
+                  height: AppConstants.creditCardIconSize,
+                  width: AppConstants.creditCardIconSize,
+                  package: AppConstants.packageName,
+                ),
               )
             : blankSpace,
       );
