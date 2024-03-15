@@ -41,6 +41,7 @@ class CreditCardForm extends StatefulWidget {
     this.expiryDateLabel,
     this.cvvLabel,
     this.cardHolderLabel,
+    this.inputPadding = const EdgeInsets.symmetric(vertical: 8.0),
     super.key,
   });
 
@@ -155,6 +156,9 @@ class CreditCardForm extends StatefulWidget {
   /// [https://github.com/flutter/flutter/issues/104604](https://github.com/flutter/flutter/issues/104604).
   final bool disableCardNumberAutoFillHints;
 
+  /// A padding to be applied to each input in the form.
+  final EdgeInsetsGeometry inputPadding;
+
   @override
   State<CreditCardForm> createState() => _CreditCardFormState();
 }
@@ -211,7 +215,7 @@ class _CreditCardFormState extends State<CreditCardForm> {
           Visibility(
             visible: widget.isCardNumberVisible,
             child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              padding: widget.inputPadding,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
@@ -250,7 +254,7 @@ class _CreditCardFormState extends State<CreditCardForm> {
                 visible: widget.isExpiryDateVisible,
                 child: Expanded(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    padding: widget.inputPadding,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
@@ -287,7 +291,7 @@ class _CreditCardFormState extends State<CreditCardForm> {
                 child: Visibility(
                   visible: widget.enableCvv,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    padding: widget.inputPadding,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
@@ -326,7 +330,7 @@ class _CreditCardFormState extends State<CreditCardForm> {
           Visibility(
             visible: widget.isHolderNameVisible,
             child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              padding: widget.inputPadding,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
